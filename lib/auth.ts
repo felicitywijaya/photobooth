@@ -52,7 +52,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     session({ session, token }) {
       if (session.user) {
-        session.user.role = (token as Record<string, unknown>).role as UserRole
+        const role = (token as Record<string, unknown> | undefined)?.role
+        session.user.role = (role as UserRole) ?? "user"
       }
       return session
     },
