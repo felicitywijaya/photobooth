@@ -6,7 +6,7 @@ import { Suspense } from "react"
 
 export default async function SetupDrivePage() {
   const session = await auth()
-  if (!session || session.user.role !== "admin") redirect("/photobooth")
+  if (!session || session.user.role !== "admin") redirect("/login")
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">

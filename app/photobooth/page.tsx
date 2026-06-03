@@ -6,5 +6,5 @@ export default async function PhotoboothPage() {
   const session = await auth()
   if (!session) redirect("/login")
 
-  return <PhotoboothApp role={session.user.role} />
+  return <PhotoboothApp />
 }

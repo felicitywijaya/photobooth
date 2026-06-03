@@ -6,7 +6,7 @@ import CameraCapture from "./CameraCapture"
 import FrameReview from "./FrameReview"
 import TemplateSelector from "./TemplateSelector"
 
-type Phase = "camera" | "review" | "template-select" | "processing" | "done" | "error"
+type Phase = "idle" | "camera" | "review" | "template-select" | "processing" | "done" | "error"
 
 interface Template {
   id: string
@@ -22,12 +22,8 @@ interface Rect {
   height: number
 }
 
-interface PhotoboothAppProps {
-  role: "admin" | "user"
-}
-
-export default function PhotoboothApp({ role }: PhotoboothAppProps) {
-  const [phase, setPhase] = useState<Phase>("camera")
+export default function PhotoboothApp() {
+  const [phase, setPhase] = useState<Phase>("idle")
   const [frames, setFrames] = useState<(string | null)[]>([null, null, null])
   const [reshootIndex, setReshootIndex] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState("")
@@ -88,7 +84,7 @@ export default function PhotoboothApp({ role }: PhotoboothAppProps) {
           setFrames([null, null, null])
           setFinalImage(null)
           setDriveLink("")
-          setPhase("camera")
+          setPhase("idle")
         }, 6000)
       } catch (err) {
         setErrorMessage(err instanceof Error ? err.message : "Something went wrong")
@@ -106,44 +102,45 @@ export default function PhotoboothApp({ role }: PhotoboothAppProps) {
     setDriveLink("")
     setErrorMessage("")
     setReshootIndex(null)
-    setPhase("camera")
+    setPhase("idle")
   }, [])
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
+  if (phase === "idle") {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-8 px-4">
+        <div className="text-center space-y-3">
+          <h1 className="text-5xl font-bold text-white tracking-widest uppercase">
+            Photobooth
+          </h1>
+          <p className="text-zinc-400 text-lg">3 frames · 5 seconds each</p>
+        </div>
+
+        <button
+          onClick={() => setPhase("camera")}
+          className="bg-white text-black font-bold text-2xl px-16 py-5 rounded-2xl hover:bg-zinc-200 active:scale-95 transition-all shadow-2xl"
+        >
+          Start Photo
+        </button>
+
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="absolute bottom-6 right-6 text-zinc-600 hover:text-zinc-400 text-xs transition-colors"
+        >
+          Sign Out
+        </button>
+      </div>
+    )
+  }
+
   if (phase === "camera") {
     return (
-      <>
-        <CameraCapture
-          reshootIndex={reshootIndex}
-          existingFrames={frames}
-          onComplete={handleCaptureComplete}
-        />
-        {role === "admin" && (
-          <div className="fixed top-4 right-4 z-50 flex gap-2">
-            <a
-              href="/admin"
-              className="bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg hover:bg-black/80 transition-colors"
-            >
-              Admin
-            </a>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg hover:bg-black/80 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        )}
-        {role === "user" && (
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="fixed top-4 right-4 z-50 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg hover:bg-black/80 transition-colors"
-          >
-            Sign Out
-          </button>
-        )}
-      </>
+      <CameraCapture
+        reshootIndex={reshootIndex}
+        existingFrames={frames}
+        onComplete={handleCaptureComplete}
+      />
     )
   }
 
