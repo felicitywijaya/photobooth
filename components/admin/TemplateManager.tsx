@@ -38,8 +38,10 @@ export default function TemplateManager() {
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.name.toLowerCase().endsWith(".png")) {
-      setError("Only PNG files are supported")
+    const allowed = [".png", ".jpg", ".jpeg"]
+    const ext = file.name.toLowerCase().match(/\.[^.]+$/)?.[0] ?? ""
+    if (!allowed.includes(ext)) {
+      setError("Only PNG, JPG, or JPEG files are supported")
       return
     }
 
@@ -83,7 +85,7 @@ export default function TemplateManager() {
         <div>
           <h2 className="text-xl font-semibold">Frame Templates</h2>
           <p className="text-zinc-400 text-sm mt-1">
-            Upload PNG files with 3 transparent rectangular areas (top to bottom = frame 1, 2, 3)
+            Upload PNG / JPG / JPEG — PNG with 3 transparent areas recommended for compositing
           </p>
         </div>
         <label className={`cursor-pointer bg-white text-black font-semibold rounded-lg px-5 py-2.5 text-sm hover:bg-zinc-200 transition-colors ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}>
@@ -91,7 +93,7 @@ export default function TemplateManager() {
           <input
             ref={fileRef}
             type="file"
-            accept=".png,image/png"
+            accept=".png,.jpg,.jpeg,image/png,image/jpeg"
             className="hidden"
             onChange={handleUpload}
             disabled={uploading}

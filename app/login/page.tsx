@@ -26,7 +26,7 @@ export default function LoginPage() {
     if (result?.error) {
       setError("Invalid username or password")
     } else {
-      router.push("/photobooth")
+      router.push("/")
       router.refresh()
     }
   }

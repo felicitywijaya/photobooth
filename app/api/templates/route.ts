@@ -26,8 +26,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    if (!file.name.toLowerCase().endsWith(".png")) {
-      return NextResponse.json({ error: "Only PNG files are allowed" }, { status: 400 })
+    const allowed = [".png", ".jpg", ".jpeg"]
+    const ext = file.name.toLowerCase().match(/\.[^.]+$/)?.[0] ?? ""
+    if (!allowed.includes(ext)) {
+      return NextResponse.json({ error: "Only PNG, JPG, or JPEG files are allowed" }, { status: 400 })
     }
 
     const template = await uploadTemplate(file)

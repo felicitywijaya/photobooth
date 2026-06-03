@@ -7,7 +7,8 @@ export default auth((req) => {
   const role = req.auth?.user?.role
 
   if (pathname === "/login" && isAuthenticated) {
-    return NextResponse.redirect(new URL("/photobooth", req.url))
+    const dest = role === "admin" ? "/admin" : "/photobooth"
+    return NextResponse.redirect(new URL(dest, req.url))
   }
 
   if (!isAuthenticated && (pathname.startsWith("/photobooth") || pathname.startsWith("/admin"))) {

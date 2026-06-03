@@ -24,12 +24,18 @@ export async function listTemplates(): Promise<Template[]> {
   })
 }
 
+function mimeFromName(filename: string): string {
+  const ext = filename.toLowerCase().split(".").pop()
+  if (ext === "jpg" || ext === "jpeg") return "image/jpeg"
+  return "image/png"
+}
+
 export async function uploadTemplate(file: File): Promise<Template> {
   const id = uuidv4()
   const safeName = encodeURIComponent(file.name)
   const blob = await put(`templates/${id}_${safeName}`, file, {
     access: "public",
-    contentType: "image/png",
+    contentType: mimeFromName(file.name),
   })
   return {
     id,
