@@ -249,7 +249,7 @@ async function compositeImages(frames: string[], templateUrl: string): Promise<s
       // Detect transparent regions from template
       ctx.drawImage(templateImg, 0, 0)
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const regions = detectTransparentRegions(imageData, 3)
+      const regions = detectPlaceholderRegions(imageData, 3)
 
       // Clear and draw white background
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -297,19 +297,34 @@ async function compositeImages(frames: string[], templateUrl: string): Promise<s
   })
 }
 
-function detectTransparentRegions(imageData: ImageData, count: number): Rect[] {
+function detectPlaceholderRegions(imageData: ImageData, count: number): Rect[] {
   const { data, width, height } = imageData
-  const ALPHA_THRESHOLD = 50
   const ROW_COVERAGE_THRESHOLD = 0.15
   const MIN_HEIGHT = 20
 
+  // Check if the template has any real transparency (PNG with alpha holes)
+  let hasTransparency = false
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 128) { hasTransparency = true; break }
+  }
+
+  // For PNG: match transparent pixels. For JPEG: match gray placeholder boxes.
+  // Gray placeholders: R≈G≈B (channels within 25 of each other) and mid-brightness (150–225).
+  function isPlaceholder(pixelIndex: number): boolean {
+    if (hasTransparency) return data[pixelIndex + 3] < 50
+    const r = data[pixelIndex], g = data[pixelIndex + 1], b = data[pixelIndex + 2]
+    const avg = (r + g + b) / 3
+    return avg > 150 && avg < 225 &&
+      Math.abs(r - g) < 25 && Math.abs(g - b) < 25 && Math.abs(r - b) < 25
+  }
+
   const rowCoverage = new Float32Array(height)
   for (let y = 0; y < height; y++) {
-    let transparentCount = 0
+    let count = 0
     for (let x = 0; x < width; x++) {
-      if (data[(y * width + x) * 4 + 3] < ALPHA_THRESHOLD) transparentCount++
+      if (isPlaceholder((y * width + x) * 4)) count++
     }
-    rowCoverage[y] = transparentCount / width
+    rowCoverage[y] = count / width
   }
 
   const bands: Array<{ start: number; end: number }> = []
@@ -334,7 +349,7 @@ function detectTransparentRegions(imageData: ImageData, count: number): Rect[] {
     let xMax = -1
     for (let y = start; y <= end; y++) {
       for (let x = 0; x < width; x++) {
-        if (data[(y * width + x) * 4 + 3] < ALPHA_THRESHOLD) {
+        if (isPlaceholder((y * width + x) * 4)) {
           if (x < xMin) xMin = x
           if (x > xMax) xMax = x
         }
