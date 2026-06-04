@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import AdminSignOut from "@/components/admin/AdminSignOut"
-import Link from "next/link"
 import { readdir } from "fs/promises"
 import path from "path"
 import Image from "next/image"
@@ -26,15 +25,7 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold tracking-wide">Admin Panel</h1>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin/setup-drive"
-            className="text-sm text-zinc-400 hover:text-white transition-colors"
-          >
-            Google Drive Setup
-          </Link>
-          <AdminSignOut />
-        </div>
+        <AdminSignOut />
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">

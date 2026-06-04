@@ -28,7 +28,6 @@ export default function PhotoboothApp() {
   const [reshootIndex, setReshootIndex] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState("")
   const [finalImage, setFinalImage] = useState<string | null>(null)
-  const [driveLink, setDriveLink] = useState("")
 
   // ── Camera callbacks ───────────────────────────────────────────────────────
 
@@ -66,26 +65,14 @@ export default function PhotoboothApp() {
       try {
         const composed = await compositeImages(frames as string[], template.url)
         setFinalImage(composed)
-
-        const res = await fetch("/api/save-photo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageData: composed }),
-        })
-
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || "Save failed")
-
-        setDriveLink(data.link)
+        downloadImage(composed)
         setPhase("done")
 
-        // Auto-reset after 6 seconds
         setTimeout(() => {
           setFrames([null, null, null])
           setFinalImage(null)
-          setDriveLink("")
           setPhase("idle")
-        }, 6000)
+        }, 8000)
       } catch (err) {
         setErrorMessage(err instanceof Error ? err.message : "Something went wrong")
         setPhase("error")
@@ -99,7 +86,6 @@ export default function PhotoboothApp() {
   const handleReset = useCallback(() => {
     setFrames([null, null, null])
     setFinalImage(null)
-    setDriveLink("")
     setErrorMessage("")
     setReshootIndex(null)
     setPhase("idle")
@@ -166,7 +152,6 @@ export default function PhotoboothApp() {
           <div className="absolute inset-0 border-4 border-t-white rounded-full animate-spin" />
         </div>
         <p className="text-white text-xl font-semibold">Creating your photo...</p>
-        <p className="text-zinc-400 text-sm">Saving to Google Drive</p>
       </div>
     )
   }
@@ -183,16 +168,26 @@ export default function PhotoboothApp() {
           />
         )}
         <div className="text-center space-y-2">
-          <p className="text-green-400 text-2xl font-bold">✓ Photo Saved!</p>
-          <p className="text-zinc-400 text-sm">Your photo has been saved to Google Drive</p>
+          <p className="text-green-400 text-2xl font-bold">✓ Photo Ready!</p>
+          <p className="text-zinc-400 text-sm">
+            Download otomatis dimulai. Jika tidak, tekan tombol di bawah.
+          </p>
         </div>
-        <p className="text-zinc-500 text-sm">Starting over in a few seconds...</p>
-        <button
-          onClick={handleReset}
-          className="bg-white text-black font-semibold px-8 py-3 rounded-xl hover:bg-zinc-200 transition-colors"
-        >
-          Take Another Photo
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => finalImage && downloadImage(finalImage)}
+            className="bg-white text-black font-semibold px-6 py-3 rounded-xl hover:bg-zinc-200 transition-colors"
+          >
+            Download Lagi
+          </button>
+          <button
+            onClick={handleReset}
+            className="bg-zinc-800 text-white font-semibold px-6 py-3 rounded-xl hover:bg-zinc-700 transition-colors"
+          >
+            Foto Lagi
+          </button>
+        </div>
+        <p className="text-zinc-600 text-xs">Otomatis reset dalam beberapa detik...</p>
       </div>
     )
   }
@@ -213,6 +208,29 @@ export default function PhotoboothApp() {
   }
 
   return null
+}
+
+// ── Download ─────────────────────────────────────────────────────────────────
+
+function downloadImage(dataUrl: string): void {
+  const filename = `photobooth_${new Date().toISOString().replace(/[:.]/g, "-")}.jpg`
+  try {
+    const arr = dataUrl.split(",")
+    const bstr = atob(arr[1])
+    const u8arr = new Uint8Array(bstr.length)
+    for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i)
+    const blob = new Blob([u8arr], { type: "image/jpeg" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch {
+    // iOS Safari: download attribute tidak support — user bisa long-press gambar untuk save
+  }
 }
 
 // ── Canvas compositing ───────────────────────────────────────────────────────
