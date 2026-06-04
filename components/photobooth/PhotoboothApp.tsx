@@ -111,7 +111,7 @@ export default function PhotoboothApp() {
         </button>
 
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={async () => { await signOut({ redirect: false }); window.location.href = "/login" }}
           className="absolute bottom-6 right-6 text-zinc-600 hover:text-zinc-400 text-xs transition-colors"
         >
           Sign Out
