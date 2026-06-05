@@ -3,7 +3,7 @@ import "./globals.css"
 import { SessionProvider } from "next-auth/react"
 
 export const metadata: Metadata = {
-  title: "Photobooth",
+  title: "EchoBooth",
   description: "Digital Photobooth",
 }
 

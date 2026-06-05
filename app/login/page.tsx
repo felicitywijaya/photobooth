@@ -36,7 +36,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-white tracking-widest uppercase">
-            Photobooth
+            EchoBooth
           </h1>
           <p className="text-zinc-500 mt-2 text-sm">Sign in to continue</p>
         </div>

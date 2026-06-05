@@ -14,7 +14,7 @@ interface TemplateSelectorProps {
   onSelect: (template: Template) => void
 }
 
-const SELECTION_TIMEOUT = 15
+const SELECTION_TIMEOUT = 30
 
 export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
   const [templates, setTemplates] = useState<Template[]>([])
@@ -24,7 +24,7 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasAutoSelected = useRef(false)
 
-  const confirm = useCallback(
+  const handleConfirm = useCallback(
     (template: Template) => {
       if (timerRef.current) clearInterval(timerRef.current)
       onSelect(template)
@@ -52,7 +52,7 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
           if (!hasAutoSelected.current) {
             hasAutoSelected.current = true
             const target = selected ?? templates[0]
-            if (target) onSelect(target)
+            if (target) handleConfirm(target)
           }
           return 0
         }
@@ -114,10 +114,7 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
               return (
                 <button
                   key={template.id}
-                  onClick={() => {
-                    setSelected(template)
-                    confirm(template)
-                  }}
+                  onClick={() => setSelected(template)}
                   className={`relative aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all ${
                     isSelected
                       ? "border-white scale-[1.02] shadow-xl shadow-white/20"
@@ -145,8 +142,17 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
           </div>
         )}
 
+        {selected && (
+          <button
+            onClick={() => handleConfirm(selected)}
+            className="bg-white text-black font-bold text-lg px-12 py-4 rounded-2xl hover:bg-zinc-200 active:scale-95 transition-all shadow-xl"
+          >
+            Pakai Template Ini
+          </button>
+        )}
+
         <p className="text-zinc-500 text-sm">
-          Auto-selects highlighted template when timer runs out
+          Auto-pilih template yang dipilih saat timer habis
         </p>
       </div>
     </div>

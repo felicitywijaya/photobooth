@@ -98,9 +98,9 @@ export default function PhotoboothApp() {
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-8 px-4">
         <div className="text-center space-y-3">
           <h1 className="text-5xl font-bold text-white tracking-widest uppercase">
-            Photobooth
+            EchoBooth
           </h1>
-          <p className="text-zinc-400 text-lg">3 frames · 5 seconds each</p>
+          <p className="text-zinc-400 text-lg">3 frames · 10 seconds each</p>
         </div>
 
         <button

@@ -13,7 +13,7 @@ interface CameraCaptureProps {
   onComplete: (results: CaptureResult[]) => void
 }
 
-const COUNTDOWN_SECONDS = 5
+const COUNTDOWN_SECONDS = 10
 
 export default function CameraCapture({ reshootIndex, existingFrames, onComplete }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
