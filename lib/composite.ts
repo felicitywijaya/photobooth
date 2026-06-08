@@ -8,7 +8,7 @@ interface Rect {
 function detectPlaceholderRegions(imageData: ImageData, count: number): Rect[] {
   const { data, width, height } = imageData
   const ROW_COVERAGE_THRESHOLD = 0.15
-  const MIN_HEIGHT = 20
+  const MIN_HEIGHT = 40
 
   let hasTransparency = false
   for (let i = 3; i < data.length; i += 4) {
@@ -49,21 +49,34 @@ function detectPlaceholderRegions(imageData: ImageData, count: number): Rect[] {
     bands.push({ start: bandStart, end: height - 1 })
   }
 
-  const regions: Rect[] = bands.map(({ start, end }) => {
-    let xMin = width, xMax = -1
+  const allRegions: Rect[] = bands.map(({ start, end }) => {
+    // Use column-coverage threshold for X boundaries (avoids stray transparent pixels)
+    const colCount = new Int32Array(width)
+    const bandHeight = end - start + 1
     for (let y = start; y <= end; y++) {
       for (let x = 0; x < width; x++) {
-        if (isPlaceholder((y * width + x) * 4)) {
-          if (x < xMin) xMin = x
-          if (x > xMax) xMax = x
-        }
+        if (isPlaceholder((y * width + x) * 4)) colCount[x]++
       }
     }
+    const COL_THRESHOLD = 0.1
+    let xMin = width, xMax = -1
+    for (let x = 0; x < width; x++) {
+      if (colCount[x] / bandHeight >= COL_THRESHOLD) {
+        if (x < xMin) xMin = x
+        if (x > xMax) xMax = x
+      }
+    }
+    if (xMax === -1) { xMin = 0; xMax = 0 }
     return { x: xMin, y: start, width: xMax - xMin + 1, height: end - start + 1 }
   })
 
-  regions.sort((a, b) => b.width * b.height - a.width * a.height)
-  const top = regions.slice(0, count)
+  // Drop decorative/small regions — keep only those >= 25% of the largest area
+  const largestArea = allRegions.reduce((m, r) => Math.max(m, r.width * r.height), 0)
+  const filtered = allRegions.filter(r => r.width * r.height >= largestArea * 0.25)
+  const candidates = filtered.length >= count ? filtered : allRegions
+
+  candidates.sort((a, b) => b.width * b.height - a.width * a.height)
+  const top = candidates.slice(0, count)
   top.sort((a, b) => a.y - b.y)
   return top
 }
@@ -96,7 +109,9 @@ export function compositeImages(frames: string[], templateUrl: string): Promise<
             const scaledW = photo.naturalWidth * scale
             const scaledH = photo.naturalHeight * scale
             const offsetX = region.x + (region.width - scaledW) / 2
-            const offsetY = region.y + (region.height - scaledH) / 2
+            // Portrait frames: anchor at 30% from top so face stays in frame across templates
+            const vAnchor = region.height > region.width ? 0.3 : 0.5
+            const offsetY = region.y + (region.height - scaledH) * vAnchor
 
             ctx.save()
             ctx.beginPath()
