@@ -35,15 +35,33 @@ export default function CameraCapture({ reshootIndex, existingFrames, onComplete
     const canvas = canvasRef.current
     if (!video || !canvas) return
 
-    const ctx = canvas.getContext("2d")!
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    const vW = video.videoWidth
+    const vH = video.videoHeight
 
-    // Mirror the captured image to match the mirrored preview
+    // Crop to the portrait ratio the user sees on screen (object-cover preview).
+    // Min 4:3 so landscape desktops still capture portrait.
+    const targetRatio = Math.max(window.innerHeight / window.innerWidth, 4 / 3)
+    const videoRatio = vH / vW
+
+    let srcX = 0, srcY = 0, srcW = vW, srcH = vH
+    if (videoRatio < targetRatio) {
+      // Video wider than target — trim sides
+      srcW = Math.round(vH / targetRatio)
+      srcX = Math.round((vW - srcW) / 2)
+    } else {
+      // Video taller than target — trim top/bottom
+      srcH = Math.round(vW * targetRatio)
+      srcY = Math.round((vH - srcH) / 2)
+    }
+
+    canvas.width = srcW
+    canvas.height = srcH
+
+    const ctx = canvas.getContext("2d")!
     ctx.save()
     ctx.translate(canvas.width, 0)
     ctx.scale(-1, 1)
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH)
     ctx.restore()
 
     return canvas.toDataURL("image/jpeg", 0.9)

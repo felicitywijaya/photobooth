@@ -109,8 +109,9 @@ export function compositeImages(frames: string[], templateUrl: string): Promise<
             const scaledW = photo.naturalWidth * scale
             const scaledH = photo.naturalHeight * scale
             const offsetX = region.x + (region.width - scaledW) / 2
-            // Portrait frames: anchor at 30% from top so face stays in frame across templates
-            const vAnchor = region.height > region.width ? 0.3 : 0.5
+            // Anchor at 1/3 from top: portrait-captured photos have face at ~33% from top,
+            // this keeps face position consistent regardless of each template's frame height.
+            const vAnchor = region.height > region.width ? 1 / 3 : 0.5
             const offsetY = region.y + (region.height - scaledH) * vAnchor
 
             ctx.save()
